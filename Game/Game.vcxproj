@@ -142,12 +142,22 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AriMath.cpp" />
+    <ClCompile Include="EnginePatches.cpp" />
+    <ClCompile Include="ld32.c" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MemoryUtil.cpp" />
+    <ClCompile Include="RubyCommon.cpp" />
     <ClCompile Include="SigScanner.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AriMath.h" />
+    <ClInclude Include="EnginePatches.h" />
+    <ClInclude Include="ld32.h" />
     <ClInclude Include="MemoryUtil.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="resource1.h" />
+    <ClInclude Include="RubyCommon.h" />
     <ClInclude Include="SigScanner.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

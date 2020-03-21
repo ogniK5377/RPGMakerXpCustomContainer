@@ -17,9 +17,11 @@ public:
                          std::size_t _offset = 0);
 
     void Scan();
+    void Reset();
 
-    std::optional<DWORD> GetScannedAddress(std::string name);
+    DWORD GetScannedAddress(std::string name);
     bool HasFound(std::string name);
+    bool HasFoundAll() const;
 
 private:
     struct Signature {
@@ -49,5 +51,6 @@ private:
     std::unordered_map<std::string, DWORD> found_sigs{};
     std::vector<Signature> sigs_to_find{};
     std::string module_to_scan{};
+    std::optional<DWORD> GetScannedAddressOpt(std::string name);
 };
 } // namespace MemoryUtil

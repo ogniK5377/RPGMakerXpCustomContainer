@@ -4,6 +4,7 @@
 #include <vector>
 #include <Windows.h>
 #include <psapi.h>
+#include "EnginePatches.h"
 #include "MemoryUtil.h"
 #include "SigScanner.h"
 
@@ -15,8 +16,8 @@ constexpr std::array<char, 8> PATCHED_HEADER{'\x31', '\xac', '\x3e', '\x2d',
                                              '\x9b', '\x23', '\xda', '\x11'};
 constexpr unsigned int NEW_KEY = 0xBCF33B95;
 
-// If we're running from a debugger or within MSVC, we'll get a debugger is attached error. We patch
-// out the IsDebuggerPresent() check just to allow the ability to debug
+// If we're running from a debugger or within MSVC, we'll get a debugger is attached error. We
+// patch out the IsDebuggerPresent() check just to allow the ability to debug
 void PatchDebugPresent() {
     const auto kernel32 = GetModuleHandle("Kernel32.dll");
     if (kernel32 == 0) {
@@ -29,8 +30,8 @@ void PatchDebugPresent() {
 
     // EAX stores the return of IsDebuggerPresent()
     std::array<char, 3> patch{
-        0x31, 0xC0, // xor eax, eax
-        0xC3        // ret
+        '\x31', '\xC0', // xor eax, eax
+        '\xC3'          // ret
     };
     MemoryUtil::PatchBytes(reinterpret_cast<DWORD>(addr), patch.data(), patch.size());
 }
@@ -53,8 +54,8 @@ void SwapRgssadEncryption(const char* library_path) {
 
     // Only sig patch if we've found both the header and the key
     if (scanner.HasFound("RGSSAD_Header") && scanner.HasFound("RGSSAD_Key")) {
-        auto header_address = scanner.GetScannedAddress("RGSSAD_Header").value();
-        auto key_address = scanner.GetScannedAddress("RGSSAD_Key").value();
+        auto header_address = scanner.GetScannedAddress("RGSSAD_Header");
+        auto key_address = scanner.GetScannedAddress("RGSSAD_Key");
 
         // Copy our new header bytes and write
         std::array<char, 32> header;
@@ -156,7 +157,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     std::string RGSSAD(game_directory + "\\" + rgssad_path);
     if (GetFileAttributes(RGSSAD.c_str()) == INVALID_FILE_ATTRIBUTES) {
-        RGSSAD.clear();
+        RGSSAD = "";
     }
 
     // Create RGSS Player window class
@@ -238,6 +239,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     if (PATCH_KEY_AND_HEADER) {
         SwapRgssadEncryption(library_path);
     }
+
+    // RGSSAD Level patches
+    Patches::SetupDetours(library_path);
 
     // Get the exports from the RGSS dll
     if (!GetRGSSExports(rgssad_library)) {

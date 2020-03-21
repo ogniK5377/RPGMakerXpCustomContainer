@@ -9,9 +9,14 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    <Filter Include="Resources">
+      <UniqueIdentifier>{7d5054c0-7678-4937-872a-09d82a7efa96}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\RubyModules">
+      <UniqueIdentifier>{322bf567-4097-46fe-ac8d-b92adeacda54}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\RubyModules">
+      <UniqueIdentifier>{f769a3d0-a5fd-4895-8eb6-ec277df8939d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -24,6 +29,18 @@
     <ClCompile Include="SigScanner.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ld32.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="EnginePatches.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AriMath.cpp">
+      <Filter>Source Files\RubyModules</Filter>
+    </ClCompile>
+    <ClCompile Include="RubyCommon.cpp">
+      <Filter>Source Files\RubyModules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SigScanner.h">
@@ -31,6 +48,24 @@
     </ClInclude>
     <ClInclude Include="MemoryUtil.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="resource1.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ld32.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="EnginePatches.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AriMath.h">
+      <Filter>Header Files\RubyModules</Filter>
+    </ClInclude>
+    <ClInclude Include="RubyCommon.h">
+      <Filter>Header Files\RubyModules</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

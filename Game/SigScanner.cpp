@@ -61,19 +61,46 @@ void SigScanner::Scan() {
     sigs_to_find.clear();
 }
 
-std::optional<DWORD> SigScanner::GetScannedAddress(std::string name) {
+void SigScanner::Reset() {
+    // Clear any sigs we need to find and the sigs we already found
+    found_sigs.clear();
+    sigs_to_find.clear();
+}
+
+std::optional<DWORD> SigScanner::GetScannedAddressOpt(std::string name) {
+    // Check if the signature name exists
     auto it = found_sigs.find(name);
     if (it == found_sigs.end()) {
         return {};
     }
+    // If we have a zero address, assume it's invalid
     if (it->second == 0) {
         return {};
     }
+
+    // Return the found address
     return it->second;
 }
 
+DWORD SigScanner::GetScannedAddress(std::string name) {
+    return GetScannedAddressOpt(name).value_or(0);
+}
+
 bool SigScanner::HasFound(std::string name) {
-    return GetScannedAddress(name).has_value();
+    // Check if our address has a non zero value
+    return GetScannedAddressOpt(name).has_value();
+}
+
+bool SigScanner::HasFoundAll() const {
+    // Check every signature
+    for (const auto sig : found_sigs) {
+        // If our signature failed to be found, bail
+        if (sig.second == 0) {
+            return false;
+        }
+    }
+    // All sigs are found
+    return true;
 }
 
 } // namespace MemoryUtil
