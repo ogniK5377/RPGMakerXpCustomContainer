@@ -49,12 +49,6 @@
     <ClInclude Include="MemoryUtil.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="resource.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="resource1.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ld32.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -66,6 +60,9 @@
     </ClInclude>
     <ClInclude Include="RubyCommon.h">
       <Filter>Header Files\RubyModules</Filter>
+    </ClInclude>
+    <ClInclude Include="Common.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
