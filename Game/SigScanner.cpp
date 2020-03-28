@@ -23,8 +23,8 @@ void SigScanner::Scan() {
         return;
     }
 
-    char* p = (char*)base;
-    char* end = (char*)(p + module_info.SizeOfImage);
+    char* p = reinterpret_cast<char*>(base);
+    char* end = reinterpret_cast<char*>(p + module_info.SizeOfImage);
 
     // While we're not at the end of our image and we still need to look for signatures
     while (p < end && !sigs_to_find.empty()) {
@@ -45,7 +45,7 @@ void SigScanner::Scan() {
             }
             // If we scanned our whole signature without failing, we found our signature
             if (found) {
-                found_sigs[it->name] = (DWORD)p + it->offset;
+                found_sigs[it->name] = reinterpret_cast<uintptr_t>(p) + it->offset;
                 it = sigs_to_find.erase(it);
             } else {
                 it++;
@@ -67,7 +67,7 @@ void SigScanner::Reset() {
     sigs_to_find.clear();
 }
 
-std::optional<DWORD> SigScanner::GetScannedAddressOpt(std::string name) {
+std::optional<uintptr_t> SigScanner::GetScannedAddressOpt(std::string name) {
     // Check if the signature name exists
     auto it = found_sigs.find(name);
     if (it == found_sigs.end()) {
@@ -82,13 +82,13 @@ std::optional<DWORD> SigScanner::GetScannedAddressOpt(std::string name) {
     return it->second;
 }
 
-DWORD SigScanner::GetScannedAddress(std::string name) {
-    return GetScannedAddressOpt(name).value_or(0);
+uintptr_t SigScanner::GetScannedAddress(std::string_view name) {
+    return GetScannedAddressOpt(name.data()).value_or(0);
 }
 
-bool SigScanner::HasFound(std::string name) {
+bool SigScanner::HasFound(std::string_view name) {
     // Check if our address has a non zero value
-    return GetScannedAddressOpt(name).has_value();
+    return GetScannedAddressOpt(name.data()).has_value();
 }
 
 bool SigScanner::HasFoundAll() const {

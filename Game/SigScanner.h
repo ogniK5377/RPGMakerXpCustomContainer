@@ -19,8 +19,8 @@ public:
     void Scan();
     void Reset();
 
-    DWORD GetScannedAddress(std::string name);
-    bool HasFound(std::string name);
+    uintptr_t GetScannedAddress(std::string_view name);
+    bool HasFound(std::string_view name);
     bool HasFoundAll() const;
 
 private:
@@ -48,9 +48,9 @@ private:
         }
     };
 
-    std::unordered_map<std::string, DWORD> found_sigs{};
+    std::unordered_map<std::string, uintptr_t> found_sigs{};
     std::vector<Signature> sigs_to_find{};
     std::string module_to_scan{};
-    std::optional<DWORD> GetScannedAddressOpt(std::string name);
+    std::optional<uintptr_t> GetScannedAddressOpt(std::string name);
 };
 } // namespace MemoryUtil

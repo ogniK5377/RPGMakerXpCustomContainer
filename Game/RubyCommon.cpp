@@ -53,6 +53,7 @@ void Common::Initialize(const char* library_path) {
         rb_define_module = MemoryUtil::MakeCallable<RbDefineModuleType>(rb_define_module_addr);
         rb_define_module_function =
             MemoryUtil::MakeCallable<RbDefineModuleFunctionType>(rb_define_module_function_addr);
+        rb_define_module_function_addr_abs = rb_define_module_addr;
         rb_define_const = MemoryUtil::MakeCallable<RbDefineConstType>(rb_define_const_addr);
         rb_float_new = MemoryUtil::MakeCallable<RbFloatNewType>(rb_float_new_addr);
         rb_float = MemoryUtil::MakeCallable<RbFloatType>(rb_float_addr);
@@ -63,24 +64,24 @@ void Common::AddNewModule(std::function<void()> f) {
     module_registry.push_back(f);
 }
 
-VALUE Common::DefineModule(const char* module_name) {
+RB_VALUE Common::DefineModule(const char* module_name) {
     return rb_define_module(module_name);
 }
 
-void Common::DefineModuleFunction(VALUE module_id, const char* method_name, void* method,
+void Common::DefineModuleFunction(RB_VALUE module_id, const char* method_name, void* method,
                                   int argc) {
     rb_define_module_function(module_id, method_name, method, argc);
 }
 
-void Common::DefineConst(VALUE module_id, const char* const_name, VALUE value) {
+void Common::DefineConst(RB_VALUE module_id, const char* const_name, RB_VALUE value) {
     rb_define_const(module_id, const_name, value);
 }
 
-VALUE Common::MakeFloat(double value) {
+RB_VALUE Common::MakeFloat(double value) {
     return rb_float_new(value);
 }
 
-Ruby::Float* Common::GetFloat(VALUE value) {
+Ruby::Float* Common::GetFloat(RB_VALUE value) {
     return rb_float(value);
 }
 
