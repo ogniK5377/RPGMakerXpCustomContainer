@@ -46,7 +46,7 @@ void SwapRgssadEncryption(const char* library_path) {
     scanner.Scan();
 
     // Only sig patch if we've found both the header and the key
-    if (scanner.HasFound("RGSSAD_Header") && scanner.HasFound("RGSSAD_Key")) {
+    if (scanner.HasFoundAll()) {
         auto header_address = scanner.GetScannedAddress("RGSSAD_Header");
         auto key_address = scanner.GetScannedAddress("RGSSAD_Key");
 
