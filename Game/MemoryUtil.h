@@ -22,7 +22,6 @@ void NopSled(uintptr_t address, std::size_t length);
 void PatchBytes(uintptr_t address, const char* bytes, std::size_t length);
 void PatchJump(uintptr_t src, uintptr_t dst);
 void PatchJumpNoProtect(uintptr_t src, uintptr_t dst);
-void* CreateDetour(uintptr_t src, uintptr_t dst);
 uintptr_t CalculateJumpOffset(uintptr_t src, uintptr_t dst);
 uintptr_t CallToDirectAddress(uintptr_t src);
 uintptr_t SlideAddress(uintptr_t base, uintptr_t offset);
