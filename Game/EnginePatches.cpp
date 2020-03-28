@@ -75,17 +75,17 @@ void PatchDebugPresent() {
     if (kernel32 == 0) {
         return;
     }
-    auto addr = GetProcAddress(kernel32, "IsDebuggerPresent");
+    auto addr = reinterpret_cast<uintptr_t>(GetProcAddress(kernel32, "IsDebuggerPresent"));
     if (addr == 0) {
         return;
     }
 
     // EAX stores the return of IsDebuggerPresent()
-    std::array<char, 3> patch{
+    static constexpr std::array<char, 3> patch{
         '\x31', '\xC0', // xor eax, eax
         '\xC3'          // ret
     };
-    MemoryUtil::PatchBytes(reinterpret_cast<DWORD>(addr), patch.data(), patch.size());
+    MemoryUtil::PatchBytes(addr, patch.data(), patch.size());
 }
 
 } // namespace Patches

@@ -19,7 +19,7 @@ enum class MemPerm : DWORD {
 };
 
 void NopSled(uintptr_t address, std::size_t length);
-void PatchBytes(uintptr_t address, char* bytes, std::size_t length);
+void PatchBytes(uintptr_t address, const char* bytes, std::size_t length);
 void PatchJump(uintptr_t src, uintptr_t dst);
 void PatchJumpNoProtect(uintptr_t src, uintptr_t dst);
 void* CreateDetour(uintptr_t src, uintptr_t dst);
@@ -38,6 +38,10 @@ public:
     ~ReprotectScope() {
         Reprotect(address, size, last_protection);
     }
+
+    ReprotectScope(ReprotectScope const&) = delete;
+    void operator=(ReprotectScope const& t) = delete;
+    ReprotectScope(ReprotectScope&&) = delete;
 
 private:
     MemPerm last_protection{};
@@ -63,7 +67,7 @@ T MakeCallable(uintptr_t address) {
 enum class CallConvention { CDecl, ClrCall, StdCall, FastCall, ThisCall, VectorCall };
 template <CallConvention C, typename T, typename... ARGS>
 struct BuildCallable {
-    constexpr static auto value() {
+    static constexpr auto value = [] {
         if constexpr (C == CallConvention::CDecl) {
             return static_cast<T(_cdecl*)(ARGS...)>(nullptr);
         } else if constexpr (C == CallConvention::ClrCall) {
@@ -83,11 +87,12 @@ struct BuildCallable {
         } else {
             static_assert(false, "Invalid call convention");
         }
-    }
+    }();
 };
+
 template <CallConvention C, typename R, typename... ARGS>
-R AddressCall(DWORD address, ARGS... args) {
-    using CALLABLE = decltype(BuildCallable<C, R, ARGS...>::value());
+R AddressCall(uintptr_t address, ARGS... args) {
+    using CALLABLE = decltype(BuildCallable<C, R, ARGS...>::value);
     if constexpr (std::is_void_v<R>) {
         reinterpret_cast<CALLABLE>(address)(args...);
     } else {
@@ -108,7 +113,6 @@ T CreateDetour(uintptr_t src, uintptr_t dst) {
 
     // Code cave for our bytes we copied + a jump instruction
     uintptr_t og_func = reinterpret_cast<uintptr_t>(malloc(total_to_copy + INS_JMP_LENGTH));
-    // FUNCTION_BLOCKS.push_back(og_func);
 
     // Mark our region as Read Write Execute
     Reprotect(og_func, total_to_copy + INS_JMP_LENGTH, MemPerm::ReadWriteExecute);

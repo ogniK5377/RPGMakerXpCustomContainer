@@ -6,16 +6,15 @@ namespace MemoryUtil {
 void NopSled(uintptr_t address, std::size_t length) {
     ReprotectScope<MemPerm::ReadWriteExecute> protection(address, length);
 
-    unsigned char* p = reinterpret_cast<unsigned char*>(address);
     // Fill memory with NOPs
     for (std::size_t i = 0; i < length; i++) {
-        *(unsigned char*)(address + i) = 0x90; // The opcode 0x90 is NOP
+        *reinterpret_cast<unsigned char*>(address + i) = 0x90; // The opcode 0x90 is NOP
     }
 }
 
-void PatchBytes(uintptr_t address, char* bytes, std::size_t length) {
+void PatchBytes(uintptr_t address, const char* bytes, std::size_t length) {
     ReprotectScope<MemPerm::ReadWriteExecute> protection(address, length);
-    char* p = reinterpret_cast<char*>(address);
+    auto p = reinterpret_cast<char*>(address);
 
     // Overwrite memory region with our data
     for (std::size_t i = 0; i < length; i++) {
@@ -32,22 +31,24 @@ void PatchJump(uintptr_t src, uintptr_t dst) {
 
 void PatchJumpNoProtect(uintptr_t src, uintptr_t dst) {
     // JMP 0xAABBCCDD
-    *(unsigned char*)(src) = 0xe9;                          // JMP
-    *(uintptr_t*)(src + 1) = CalculateJumpOffset(src, dst); // Address offset to jump to
+    *reinterpret_cast<unsigned char*>(src) = 0xe9; // JMP
+    *reinterpret_cast<uintptr_t*>(src + 1) =
+        CalculateJumpOffset(src, dst); // Address offset to jump to
 }
+
 uintptr_t CalculateJumpOffset(uintptr_t src, uintptr_t dst) {
     // (Destination Address - Starting Address) - Size of jmp instruction
-    return (dst - src) - 5;
+    return (dst - src) - INS_JMP_LENGTH;
 }
 
 uintptr_t CallToDirectAddress(uintptr_t src) {
     ReprotectScope<MemPerm::ReadWriteExecute> protection(src, MAX_INS_LENGTH);
     uintptr_t address{};
 
-    const char ins = *(char*)(src);
+    const auto ins = *reinterpret_cast<char*>(src);
     if (ins == '\xE8') {
         // Base + Offset + instruction size
-        address = src + *(DWORD*)(src + 1) + 5;
+        address = src + *reinterpret_cast<uintptr_t*>(src + 1) + 5;
     } else {
         DebugBreak();
     }
