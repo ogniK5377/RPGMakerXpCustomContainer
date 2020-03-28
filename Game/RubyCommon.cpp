@@ -48,12 +48,11 @@ void Common::Initialize(const char* library_path) {
         const auto rb_float_addr = scanner.GetScannedAddress("rb_float");
 
         O_RegisterRectModule = MemoryUtil::CreateDetour<RegisterRectModuleType>(
-            register_rect_module_addr, reinterpret_cast<DWORD>(&Common::RegisterRectModule));
+            register_rect_module_addr, reinterpret_cast<uintptr_t>(&Common::RegisterRectModule));
 
         rb_define_module = MemoryUtil::MakeCallable<RbDefineModuleType>(rb_define_module_addr);
         rb_define_module_function =
             MemoryUtil::MakeCallable<RbDefineModuleFunctionType>(rb_define_module_function_addr);
-        rb_define_module_function_addr_abs = rb_define_module_addr;
         rb_define_const = MemoryUtil::MakeCallable<RbDefineConstType>(rb_define_const_addr);
         rb_float_new = MemoryUtil::MakeCallable<RbFloatNewType>(rb_float_new_addr);
         rb_float = MemoryUtil::MakeCallable<RbFloatType>(rb_float_addr);

@@ -30,8 +30,6 @@ public:
     static void RegisterRectModule();
     void InternalRectCallback();
 
-    DWORD rb_define_module_function_addr_abs{};
-
 private:
     static Ruby::Common* instance;
     Common();
@@ -44,12 +42,12 @@ private:
     using RbFloatNewType = RB_VALUE(__cdecl*)(double value);
     using RbFloatType = Ruby::Float*(__cdecl*)(RB_VALUE value);
 
-    RegisterRectModuleType O_RegisterRectModule;
-    RbDefineModuleType rb_define_module;
-    RbDefineModuleFunctionType rb_define_module_function;
-    RbDefineConstType rb_define_const;
-    RbFloatNewType rb_float_new;
-    RbFloatType rb_float;
+    RegisterRectModuleType O_RegisterRectModule{};
+    RbDefineModuleType rb_define_module{};
+    RbDefineModuleFunctionType rb_define_module_function{};
+    RbDefineConstType rb_define_const{};
+    RbFloatNewType rb_float_new{};
+    RbFloatType rb_float{};
 
     std::vector<std::function<void()>> module_registry;
 };
