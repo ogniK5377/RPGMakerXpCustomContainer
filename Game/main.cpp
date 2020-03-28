@@ -24,11 +24,15 @@ RGSSEvalProc RGSSEval = nullptr;
 RGSSSetupRTPProc RGSSSetupRTP = nullptr;
 
 bool GetRGSSExports(HMODULE rgssad) {
-    RGSSInitialize = reinterpret_cast<RGSSInitializeProc>(GetProcAddress(rgssad, "RGSSInitialize"));
-    RGSSFinalize = reinterpret_cast<RGSSFinalizeProc>(GetProcAddress(rgssad, "RGSSFinalize"));
-    RGSSGameMain = reinterpret_cast<RGSSGameMainProc>(GetProcAddress(rgssad, "RGSSGameMain"));
-    RGSSEval = reinterpret_cast<RGSSEvalProc>(GetProcAddress(rgssad, "RGSSEval"));
-    RGSSSetupRTP = reinterpret_cast<RGSSSetupRTPProc>(GetProcAddress(rgssad, "RGSSSetupRTP"));
+    RGSSInitialize =
+        MemoryUtil::MakeCallable<RGSSInitializeProc>(GetProcAddress(rgssad, "RGSSInitialize"));
+    RGSSFinalize =
+        MemoryUtil::MakeCallable<RGSSFinalizeProc>(GetProcAddress(rgssad, "RGSSFinalize"));
+    RGSSGameMain =
+        MemoryUtil::MakeCallable<RGSSGameMainProc>(GetProcAddress(rgssad, "RGSSGameMain"));
+    RGSSEval = MemoryUtil::MakeCallable<RGSSEvalProc>(GetProcAddress(rgssad, "RGSSEval"));
+    RGSSSetupRTP =
+        MemoryUtil::MakeCallable<RGSSSetupRTPProc>(GetProcAddress(rgssad, "RGSSSetupRTP"));
 
     return RGSSInitialize != nullptr && RGSSFinalize != nullptr && RGSSGameMain != nullptr &&
            RGSSEval != nullptr && RGSSSetupRTP != nullptr;

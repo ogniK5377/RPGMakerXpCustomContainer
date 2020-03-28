@@ -59,8 +59,8 @@ void PatchType(uintptr_t address, T data) {
     *p = data;
 }
 
-template <typename T>
-T MakeCallable(uintptr_t address) {
+template <typename T, typename U>
+T MakeCallable(U address) {
     return reinterpret_cast<T>(address);
 }
 
