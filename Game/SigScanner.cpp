@@ -57,7 +57,6 @@ void SigScanner::Scan() {
                     }
 
                     if (is_still_valid) {
-                        // TODO(David M): Validate signature to see if it's still valid
                         found_sigs[cache_sig.signature.name].address =
                             reinterpret_cast<uintptr_t>(base) + cache_sig.offset_from_base;
                         found_sigs[cache_sig.signature.name].signature = cache_sig.signature;
