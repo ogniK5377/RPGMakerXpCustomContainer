@@ -21,10 +21,13 @@ public:
     void AddNewModule(std::function<void()> f);
 
     RB_VALUE DefineModule(const char* module_name);
+    RB_VALUE DefineClass(const char* name, RB_VALUE super);
     void DefineModuleFunction(RB_VALUE module_id, const char* method_name, void* method, int argc);
     void DefineConst(RB_VALUE module_id, const char* const_name, RB_VALUE value);
     RB_VALUE MakeFloat(double value);
     Ruby::Float* GetFloat(RB_VALUE value);
+    bool ObjIsInstanceOf(RB_VALUE obj, RB_VALUE c);
+    RB_VALUE GetcObject() const;
 
     std::vector<std::function<void()>>& GetModuleRegistry();
     static void RegisterRectModule();
@@ -41,6 +44,8 @@ private:
     using RbDefineConstType = void(__cdecl*)(RB_VALUE module_id, const char* name, RB_VALUE value);
     using RbFloatNewType = RB_VALUE(__cdecl*)(double value);
     using RbFloatType = Ruby::Float*(__cdecl*)(RB_VALUE value);
+    using RbObjIsInstanceOf = RB_VALUE(__cdecl*)(RB_VALUE obj, RB_VALUE c);
+    using RbDefineClass = RB_VALUE(__cdecl*)(const char* name, RB_VALUE super);
 
     RegisterRectModuleType O_RegisterRectModule{};
     RbDefineModuleType rb_define_module{};
@@ -48,6 +53,9 @@ private:
     RbDefineConstType rb_define_const{};
     RbFloatNewType rb_float_new{};
     RbFloatType rb_float{};
+    RbObjIsInstanceOf rb_obj_is_instance_of{};
+    RbDefineClass rb_define_class{};
+    RB_VALUE rb_cObject{};
 
     std::vector<std::function<void()>> module_registry;
 };

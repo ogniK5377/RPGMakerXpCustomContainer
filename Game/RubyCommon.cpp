@@ -32,6 +32,11 @@ void Common::Initialize(const char* library_path) {
     scanner.AddNewSignature("rb_float_new", "\xE8\x00\x00\x00\x00\x83\xC4\x08\xEB\x54",
                             "x????xxxxx");
     scanner.AddNewSignature("rb_float", "\x55\x8B\xEC\x83\xEC\x10\x8B\x45\xF8", "xxxxxxxxx");
+    scanner.AddNewSignature(
+        "rb_define_class", "\xE8\x00\x00\x00\x00\x83\xC4\x08\x89\x45\xFC\x6A\x04", "x????xxxxxxxx");
+    scanner.AddNewSignature("HandleF12Reset",
+                            "\xE8\x00\x00\x00\x00\x83\x3D\x00\x00\x00\x00\x00\x74\x1E",
+                            "x????xx?????xx");
     scanner.Scan();
 
     if (scanner.HasFoundAll()) {
@@ -46,6 +51,12 @@ void Common::Initialize(const char* library_path) {
         const auto rb_float_new_addr =
             MemoryUtil::CallToDirectAddress(scanner.GetScannedAddress("rb_float_new"));
         const auto rb_float_addr = scanner.GetScannedAddress("rb_float");
+        const auto rb_define_class_addr =
+            MemoryUtil::CallToDirectAddress(scanner.GetScannedAddress("rb_define_class"));
+        const auto HandleF12Reset_addr =
+            MemoryUtil::CallToDirectAddress(scanner.GetScannedAddress("HandleF12Reset"));
+
+        rb_cObject = *reinterpret_cast<RB_VALUE*>(HandleF12Reset_addr + 0x2A + 2);
 
         O_RegisterRectModule = MemoryUtil::CreateDetour<RegisterRectModuleType>(
             register_rect_module_addr, reinterpret_cast<uintptr_t>(&Common::RegisterRectModule));
@@ -56,6 +67,7 @@ void Common::Initialize(const char* library_path) {
         rb_define_const = MemoryUtil::MakeCallable<RbDefineConstType>(rb_define_const_addr);
         rb_float_new = MemoryUtil::MakeCallable<RbFloatNewType>(rb_float_new_addr);
         rb_float = MemoryUtil::MakeCallable<RbFloatType>(rb_float_addr);
+        rb_define_class = MemoryUtil::MakeCallable<RbDefineClass>(rb_define_class_addr);
     }
 }
 
@@ -65,6 +77,10 @@ void Common::AddNewModule(std::function<void()> f) {
 
 RB_VALUE Common::DefineModule(const char* module_name) {
     return rb_define_module(module_name);
+}
+
+RB_VALUE Common::DefineClass(const char* name, RB_VALUE super) {
+    return rb_define_class(name, super);
 }
 
 void Common::DefineModuleFunction(RB_VALUE module_id, const char* method_name, void* method,
@@ -82,6 +98,14 @@ RB_VALUE Common::MakeFloat(double value) {
 
 Ruby::Float* Common::GetFloat(RB_VALUE value) {
     return rb_float(value);
+}
+
+bool Common::ObjIsInstanceOf(RB_VALUE obj, RB_VALUE c) {
+    return rb_obj_is_instance_of(obj, c) != 0;
+}
+
+RB_VALUE Common::GetcObject() const {
+    return rb_cObject;
 }
 
 std::vector<std::function<void()>>& Common::GetModuleRegistry() {
