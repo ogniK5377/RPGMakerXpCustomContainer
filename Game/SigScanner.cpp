@@ -28,9 +28,6 @@ void SigScanner::Scan() {
         return;
     }
 
-    char* p = reinterpret_cast<char*>(base);
-    char* end = reinterpret_cast<char*>(p + module_info.SizeOfImage);
-
     auto cache = ReadFromCache();
     for (auto& cache_module : cache) {
         if (cache_module.module_name != module_to_scan) {
@@ -42,19 +39,41 @@ void SigScanner::Scan() {
                     continue;
                 }
                 if (cache_sig.found) {
-                    // TODO(David M): Validate signature to see if it's still valid
-                    found_sigs[cache_sig.signature.name].address =
+                    const uintptr_t absolute_address =
                         reinterpret_cast<uintptr_t>(base) + cache_sig.offset_from_base;
-                    found_sigs[cache_sig.signature.name].signature = cache_sig.signature;
-                    it = sigs_to_find.erase(it);
+
+                    // Signature validation
+                    char* p = reinterpret_cast<char*>(absolute_address);
+                    bool is_still_valid = true;
+                    for (std::size_t i = 0; i < cache_sig.signature.sig_length; i++) {
+                        if (cache_sig.signature.mask[i] == '?') {
+                            continue;
+                        }
+
+                        if (cache_sig.signature.signature[i] != *(p + i)) {
+                            is_still_valid = false;
+                            break;
+                        }
+                    }
+
+                    if (is_still_valid) {
+                        // TODO(David M): Validate signature to see if it's still valid
+                        found_sigs[cache_sig.signature.name].address =
+                            reinterpret_cast<uintptr_t>(base) + cache_sig.offset_from_base;
+                        found_sigs[cache_sig.signature.name].signature = cache_sig.signature;
+                        it = sigs_to_find.erase(it);
+                    }
                     break;
                 }
             }
         }
     }
 
+    char* p = reinterpret_cast<char*>(base);
+    char* end = reinterpret_cast<char*>(p + module_info.SizeOfImage);
+
     // While we're not at the end of our image and we still need to look for signatures
-    while (p < end && !sigs_to_find.empty()) {
+    while (!sigs_to_find.empty() && p < end) {
         // Check all signatures we have left to see if we match
         for (auto it = sigs_to_find.begin(); it != sigs_to_find.end();) {
             bool found = true;
