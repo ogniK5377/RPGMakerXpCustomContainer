@@ -190,6 +190,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     if (PATCH_CUSTOM_MODULES) {
         Patches::SetupDetours(library_path);
     }
+
+    Patches::PatchiBindings(library_path);
+
     // Get the exports from the RGSS dll
     if (!GetRGSSExports(rgssad_library)) {
         LOG("Failed to load RGSSAD library!");

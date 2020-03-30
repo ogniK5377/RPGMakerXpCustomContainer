@@ -3,6 +3,7 @@
 #include "AriMath.h"
 #include "Common.h"
 #include "EnginePatches.h"
+#include "Input.h"
 #include "MemoryUtil.h"
 #include "RubyCommon.h"
 #include "SigScanner.h"
@@ -66,6 +67,20 @@ void SwapRgssadEncryption(const char* library_path) {
         MemoryUtil::PatchType<unsigned int>(key_address, NEW_KEY);
     } else {
         LOG("Incorrect RGSSAD dll supplied!");
+    }
+}
+
+void PatchiBindings(const char* library_path) {
+    MemoryUtil::SigScanner scanner(library_path);
+    scanner.AddNewSignature("CRxInput::Poll", "\xE8\x00\x00\x00\x00\x6A\x1E\x8B\x45\xF0",
+                            "x????xxxxx");
+    scanner.Scan();
+    if (scanner.HasFoundAll()) {
+        const auto poll_address =
+            MemoryUtil::CallToDirectAddress(scanner.GetScannedAddress("CRxInput::Poll"));
+        using PollType = void(__thiscall*)(Input::CRxInput*);
+        // We're completely overriding the function, we don't need the original address
+        MemoryUtil::CreateDetour<PollType>(poll_address, reinterpret_cast<uintptr_t>(&Input::Poll));
     }
 }
 

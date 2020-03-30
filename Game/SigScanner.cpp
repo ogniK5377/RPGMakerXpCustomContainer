@@ -146,6 +146,9 @@ bool SigScanner::HasFound(std::string_view name) {
 }
 
 bool SigScanner::HasFoundAll() const {
+    if (!sigs_to_find.empty()) {
+        return false;
+    }
     // Check every signature
     for (const auto sig : found_sigs) {
         // If our signature failed to be found, bail

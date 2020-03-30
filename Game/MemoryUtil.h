@@ -39,7 +39,8 @@ public:
     }
 
     ReprotectScope(ReprotectScope const&) = delete;
-    void operator=(ReprotectScope const& t) = delete;
+    ReprotectScope operator=(ReprotectScope const) = delete;
+    ReprotectScope& operator=(ReprotectScope const&) = delete;
     ReprotectScope(ReprotectScope&&) = delete;
 
 private:

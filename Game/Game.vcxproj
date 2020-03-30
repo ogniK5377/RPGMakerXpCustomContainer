@@ -92,6 +92,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>Winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -145,6 +146,7 @@
     <ClCompile Include="AriMath.cpp" />
     <ClCompile Include="EnginePatches.cpp" />
     <ClCompile Include="FileIO.cpp" />
+    <ClCompile Include="Input.cpp" />
     <ClCompile Include="ld32.c" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MemoryUtil.cpp" />
@@ -156,6 +158,7 @@
     <ClInclude Include="Common.h" />
     <ClInclude Include="EnginePatches.h" />
     <ClInclude Include="FileIO.h" />
+    <ClInclude Include="Input.h" />
     <ClInclude Include="ld32.h" />
     <ClInclude Include="MemoryUtil.h" />
     <ClInclude Include="RubyCommon.h" />
