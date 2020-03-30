@@ -11,6 +11,7 @@ The RGSS container allows for more flexability with RPG Maker XP.
 * Directory swapping
 * FastBoot to launch games faster
 * More informative errors
+* Ability to build and inject custom ruby modules
 
 ## Usage
 
