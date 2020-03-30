@@ -34,6 +34,7 @@ void SigScanner::Scan() {
             continue;
         }
         for (auto it = sigs_to_find.begin(); it != sigs_to_find.end();) {
+            bool is_in_cache = false;
             for (auto& cache_sig : cache_module.signatures) {
                 if (cache_sig.signature != *it) {
                     continue;
@@ -61,9 +62,13 @@ void SigScanner::Scan() {
                             reinterpret_cast<uintptr_t>(base) + cache_sig.offset_from_base;
                         found_sigs[cache_sig.signature.name].signature = cache_sig.signature;
                         it = sigs_to_find.erase(it);
+                        is_in_cache = true;
                     }
                     break;
                 }
+            }
+            if (!is_in_cache) {
+                it++;
             }
         }
     }

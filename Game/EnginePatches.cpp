@@ -21,14 +21,16 @@ MallocType RGSSAD_MALLOC = nullptr;
 */
 
 void SetupDetours(const char* library_path) {
-    Ruby::Common::Get()->AddNewModule(&RubyModule::RegisterAriMath);
-    Ruby::Common::Get()->Initialize(library_path);
+    auto* common = Ruby::Common::Get();
+    common->AddNewModule(&RubyModule::RegisterAriMath);
+    common->Initialize(library_path);
 }
 
 /* Encryption key swap */
 constexpr std::array<char, 8> PATCHED_HEADER{'\x31', '\xac', '\x3e', '\x2d',
                                              '\x9b', '\x23', '\xda', '\x11'};
 constexpr unsigned int NEW_KEY = 0xBCF33B95;
+
 void SwapRgssadEncryption(const char* library_path) {
     MemoryUtil::SigScanner scanner(library_path);
     // Locate the RGSSAD header to change the bytes to something else. The fields for the header are
