@@ -10,6 +10,7 @@
 #include "SigScanner.h"
 
 constexpr bool PATCH_KEY_AND_HEADER = false;
+constexpr bool PATCH_CUSTOM_MODULES = false;
 
 using RGSSInitializeProc = void (*)(HINSTANCE);
 using RGSSFinalizeProc = void (*)(void);
@@ -186,8 +187,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     }
 
     // RGSSAD Level patches
-    Patches::SetupDetours(library_path);
-
+    if (PATCH_CUSTOM_MODULES) {
+        Patches::SetupDetours(library_path);
+    }
     // Get the exports from the RGSS dll
     if (!GetRGSSExports(rgssad_library)) {
         LOG("Failed to load RGSSAD library!");
