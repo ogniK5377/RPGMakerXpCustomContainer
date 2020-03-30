@@ -4,74 +4,13 @@
 #include <vector>
 #include <Windows.h>
 #include <psapi.h>
+#include "Common.h"
+#include "EnginePatches.h"
 #include "MemoryUtil.h"
 #include "SigScanner.h"
 
-#define LOG(x) MessageBox(NULL, x, "RGSSAD Container", MB_ICONERROR)
-
 constexpr bool PATCH_KEY_AND_HEADER = false;
-
-constexpr std::array<char, 8> PATCHED_HEADER{'\x31', '\xac', '\x3e', '\x2d',
-                                             '\x9b', '\x23', '\xda', '\x11'};
-constexpr unsigned int NEW_KEY = 0xBCF33B95;
-
-// If we're running from a debugger or within MSVC, we'll get a debugger is attached error. We patch
-// out the IsDebuggerPresent() check just to allow the ability to debug
-void PatchDebugPresent() {
-    const auto kernel32 = GetModuleHandle("Kernel32.dll");
-    if (kernel32 == 0) {
-        return;
-    }
-    auto addr = GetProcAddress(kernel32, "IsDebuggerPresent");
-    if (addr == 0) {
-        return;
-    }
-
-    // EAX stores the return of IsDebuggerPresent()
-    std::array<char, 3> patch{
-        0x31, 0xC0, // xor eax, eax
-        0xC3        // ret
-    };
-    MemoryUtil::PatchBytes(reinterpret_cast<DWORD>(addr), patch.data(), patch.size());
-}
-
-void SwapRgssadEncryption(const char* library_path) {
-    MemoryUtil::SigScanner scanner(library_path);
-    // Locate the RGSSAD header to change the bytes to something else. The fields for the header are
-    // not actually meaningful and are just checked against a block of memory to make sure they
-    // match
-    scanner.AddNewSignature(
-        "RGSSAD_Header",
-        "\x52\x00\x00\x00\x47\x00\x00\x00\x53\x00\x00\x00\x53\x00\x00\x00\x41\x00\x00"
-        "\x00\x44\x00\x00\x00\x00\x00\x00\x00\x01",
-        "x???x???x???x???x???x???x???x");
-
-    // Locate the base RGSSAD encryption key
-    scanner.AddNewSignature("RGSSAD_Key", "\xFE\xCA\xAD\xDE", "xxxx");
-
-    scanner.Scan();
-
-    // Only sig patch if we've found both the header and the key
-    if (scanner.HasFound("RGSSAD_Header") && scanner.HasFound("RGSSAD_Key")) {
-        auto header_address = scanner.GetScannedAddress("RGSSAD_Header").value();
-        auto key_address = scanner.GetScannedAddress("RGSSAD_Key").value();
-
-        // Copy our new header bytes and write
-        std::array<char, 32> header;
-        std::memcpy(header.data(), reinterpret_cast<void*>(header_address), header.size());
-        for (std::size_t i = 0; i < PATCHED_HEADER.size(); i++) {
-            header[i * 4] = PATCHED_HEADER[i];
-        }
-
-        // Overwrite the header to the new header
-        MemoryUtil::PatchBytes(header_address, header.data(), header.size());
-
-        // Change the encryption key used for """decrypting""" RGSSADs
-        MemoryUtil::PatchType<unsigned int>(key_address, NEW_KEY);
-    } else {
-        LOG("Incorrect RGSSAD dll supplied!");
-    }
-}
+constexpr bool PATCH_CUSTOM_MODULES = false;
 
 using RGSSInitializeProc = void (*)(HINSTANCE);
 using RGSSFinalizeProc = void (*)(void);
@@ -86,11 +25,15 @@ RGSSEvalProc RGSSEval = nullptr;
 RGSSSetupRTPProc RGSSSetupRTP = nullptr;
 
 bool GetRGSSExports(HMODULE rgssad) {
-    RGSSInitialize = reinterpret_cast<RGSSInitializeProc>(GetProcAddress(rgssad, "RGSSInitialize"));
-    RGSSFinalize = reinterpret_cast<RGSSFinalizeProc>(GetProcAddress(rgssad, "RGSSFinalize"));
-    RGSSGameMain = reinterpret_cast<RGSSGameMainProc>(GetProcAddress(rgssad, "RGSSGameMain"));
-    RGSSEval = reinterpret_cast<RGSSEvalProc>(GetProcAddress(rgssad, "RGSSEval"));
-    RGSSSetupRTP = reinterpret_cast<RGSSSetupRTPProc>(GetProcAddress(rgssad, "RGSSSetupRTP"));
+    RGSSInitialize =
+        MemoryUtil::MakeCallable<RGSSInitializeProc>(GetProcAddress(rgssad, "RGSSInitialize"));
+    RGSSFinalize =
+        MemoryUtil::MakeCallable<RGSSFinalizeProc>(GetProcAddress(rgssad, "RGSSFinalize"));
+    RGSSGameMain =
+        MemoryUtil::MakeCallable<RGSSGameMainProc>(GetProcAddress(rgssad, "RGSSGameMain"));
+    RGSSEval = MemoryUtil::MakeCallable<RGSSEvalProc>(GetProcAddress(rgssad, "RGSSEval"));
+    RGSSSetupRTP =
+        MemoryUtil::MakeCallable<RGSSSetupRTPProc>(GetProcAddress(rgssad, "RGSSSetupRTP"));
 
     return RGSSInitialize != nullptr && RGSSFinalize != nullptr && RGSSGameMain != nullptr &&
            RGSSEval != nullptr && RGSSSetupRTP != nullptr;
@@ -129,6 +72,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     char rgssad_path[0x200];
     char dll_path[0x200];
+    char cache_file[0x200];
 
     GetPrivateProfileString("Game", "Library", NULL, library_path, MAX_PATH, game_config.c_str());
     GetPrivateProfileString("Game", "Title", "RGSSAD Container", game_title, 0x200,
@@ -140,13 +84,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     GetPrivateProfileString("Container", "Dlls", "", dll_path, 0x200, game_config.c_str());
     GetPrivateProfileString("Container", "RGSSAD", "Game.rgssad", rgssad_path, 0x200,
                             game_config.c_str());
+    GetPrivateProfileString("Container", "SignatureCache", "sig_cache.che", cache_file, 0x200,
+                            game_config.c_str());
+
     const auto fast_boot =
         GetPrivateProfileInt("Container", "FastBoot", 0, game_config.c_str()) > 0;
     const auto allow_debugger =
         GetPrivateProfileInt("Container", "AllowDebugger", 0, game_config.c_str()) > 0;
 
     if (allow_debugger) {
-        PatchDebugPresent();
+        Patches::PatchDebugPresent();
     }
 
     // With the custom container, we can reroute where DLLs are stored, this lets us cleanup the
@@ -156,7 +103,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     std::string RGSSAD(game_directory + "\\" + rgssad_path);
     if (GetFileAttributes(RGSSAD.c_str()) == INVALID_FILE_ATTRIBUTES) {
-        RGSSAD.clear();
+        RGSSAD = "";
     }
 
     // Create RGSS Player window class
@@ -236,9 +183,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     // If we want to patch the rgssad, start patching
     if (PATCH_KEY_AND_HEADER) {
-        SwapRgssadEncryption(library_path);
+        Patches::SwapRgssadEncryption(library_path);
     }
 
+    // RGSSAD Level patches
+    if (PATCH_CUSTOM_MODULES) {
+        Patches::SetupDetours(library_path);
+    }
     // Get the exports from the RGSS dll
     if (!GetRGSSExports(rgssad_library)) {
         LOG("Failed to load RGSSAD library!");

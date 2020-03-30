@@ -13,19 +13,21 @@ public:
     explicit SigScanner(const char* mod);
     ~SigScanner();
 
-    void AddNewSignature(const char* _name, const char* _signature, const char* _mask,
+    void AddNewSignature(const char* _name, const char* _signature, std::string _mask,
                          std::size_t _offset = 0);
 
     void Scan();
+    void Reset();
 
-    std::optional<DWORD> GetScannedAddress(std::string name);
-    bool HasFound(std::string name);
+    uintptr_t GetScannedAddress(std::string_view name);
+    bool HasFound(std::string_view name);
+    bool HasFoundAll() const;
 
 private:
     struct Signature {
         std::string name{};
-        const char* signature{nullptr};
-        const char* mask{nullptr};
+        std::vector<char> signature{};
+        std::string mask{};
         std::size_t sig_length{0};
         std::size_t offset{0};
         Signature() = default;
@@ -36,18 +38,47 @@ private:
         // signature: "\xAA\xBB\xCC\xDD\xEE\xFF"
         // mask: "xx??xx"
         // Will NOT check the bytes \xCC\xDD
-        Signature(std::string _name, const char* _signature, const char* _mask,
+        Signature(std::string _name, const std::vector<char> _signature, std::string _mask,
                   std::size_t _offset = 0) {
             name = _name;
             signature = _signature;
             mask = _mask;
-            sig_length = strlen(_mask);
+            sig_length = _mask.size();
             offset = _offset;
+        }
+
+        inline bool operator==(const Signature& rhs) {
+            return name == rhs.name && sig_length == rhs.sig_length && offset == rhs.offset &&
+                   !strncmp(signature.data(), rhs.signature.data(), sig_length) &&
+                   !strncmp(mask.data(), rhs.mask.data(), sig_length);
+        }
+        inline bool operator!=(const Signature& rhs) {
+            return !operator==(rhs);
         }
     };
 
-    std::unordered_map<std::string, DWORD> found_sigs{};
+    struct SignaturePair {
+        Signature signature{};
+        uintptr_t address{};
+    };
+
+    struct CacheSignature {
+        Signature signature{};
+        bool found{};
+        uintptr_t offset_from_base{};
+    };
+
+    struct CacheModule {
+        std::string module_name{};
+        std::vector<CacheSignature> signatures{};
+    };
+
+    void SaveResultToCache(uintptr_t base);
+    std::vector<SigScanner::CacheModule> ReadFromCache();
+
+    std::unordered_map<std::string, SignaturePair> found_sigs{};
     std::vector<Signature> sigs_to_find{};
     std::string module_to_scan{};
+    std::optional<uintptr_t> GetScannedAddressOpt(std::string name);
 };
 } // namespace MemoryUtil
