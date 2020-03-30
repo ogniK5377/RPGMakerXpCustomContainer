@@ -1,7 +1,10 @@
 #pragma once
 #include <cstdint>
 
-namespace Input {
+namespace Memory {
 struct CRxInput;
-void Poll(CRxInput* input);
+}
+
+namespace Input {
+void Poll(Memory::CRxInput* input);
 } // namespace Input

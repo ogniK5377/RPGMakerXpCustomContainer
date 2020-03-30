@@ -1,33 +1,16 @@
 #include <array>
 #include <Windows.h>
+#include "EnginePatches.h"
 #include "Input.h"
+#include "RPG_Game.h"
 
 namespace Input {
-struct CRxInput {
-    uintptr_t vtable{};
-    int has_joy{};
-    unsigned int left_deadzone{};
-    unsigned int right_deadzone{};
-    unsigned int down_deadzone{};
-    unsigned int up_deadzone{};
-    std::array<unsigned char, 25> button_assignments{};
-    std::array<unsigned char, 30> button_state{};
-    std::array<unsigned char, 30> current_button_state{};
-    std::array<unsigned char, 30> last_button_state{};
-    char field_8B{};
-    int first_press_on_frame{};
-    int first_press_hold_framecount{};
-    int dir4{};
-    int dir8{};
-    int is_moving_sideways{};
-};
-static_assert(sizeof(CRxInput) == 0xa0, "CRxInput is an invalid size.");
 
 bool KeyDown(int vkey) {
     return GetAsyncKeyState(vkey) < 0;
 }
 
-void Poll(Input::CRxInput* input) {
+void Poll(Memory::CRxInput* input) {
     auto& bstate = input->button_state;
     auto& bassign = input->button_assignments;
     if (input->has_joy) {

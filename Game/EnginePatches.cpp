@@ -5,6 +5,7 @@
 #include "EnginePatches.h"
 #include "Input.h"
 #include "MemoryUtil.h"
+#include "RPG_Game.h"
 #include "RubyCommon.h"
 #include "SigScanner.h"
 
@@ -20,6 +21,27 @@ PrepareRGSSADType ORIGINAL_PREPARE_RGSSAD = nullptr;
 ReadRGSSADType ORIGINAL_READ_RGSSAD = nullptr;
 MallocType RGSSAD_MALLOC = nullptr;
 */
+
+using GameClassConstructorType = Memory::Game*(__thiscall*)(Memory::Game*);
+GameClassConstructorType O_GameClassConstructor{};
+
+Memory::Game* __fastcall ConstructGameClass(Memory::Game* game) {
+    RPGGameClass = O_GameClassConstructor(game);
+    return RPGGameClass;
+}
+
+void GrabGameClassAddress(const char* library_path) {
+    MemoryUtil::SigScanner scanner(library_path);
+    scanner.AddNewSignature("InitializeGameClass", "\xE8\x00\x00\x00\x00\x89\x45\xE4\xEB\x07",
+                            "x????xxxxx");
+    scanner.Scan();
+    if (scanner.HasFoundAll()) {
+        const auto init_addr =
+            MemoryUtil::CallToDirectAddress(scanner.GetScannedAddress("InitializeGameClass"));
+        O_GameClassConstructor = MemoryUtil::CreateDetour<GameClassConstructorType>(
+            init_addr, reinterpret_cast<uintptr_t>(&ConstructGameClass));
+    }
+}
 
 void SetupDetours(const char* library_path) {
     auto* common = Ruby::Common::Get();
@@ -70,7 +92,7 @@ void SwapRgssadEncryption(const char* library_path) {
     }
 }
 
-void PatchiBindings(const char* library_path) {
+void PatchBindings(const char* library_path) {
     MemoryUtil::SigScanner scanner(library_path);
     scanner.AddNewSignature("CRxInput::Poll", "\xE8\x00\x00\x00\x00\x6A\x1E\x8B\x45\xF0",
                             "x????xxxxx");
@@ -78,7 +100,7 @@ void PatchiBindings(const char* library_path) {
     if (scanner.HasFoundAll()) {
         const auto poll_address =
             MemoryUtil::CallToDirectAddress(scanner.GetScannedAddress("CRxInput::Poll"));
-        using PollType = void(__thiscall*)(Input::CRxInput*);
+        using PollType = void(__thiscall*)(Memory::CRxInput*);
         // We're completely overriding the function, we don't need the original address
         MemoryUtil::CreateDetour<PollType>(poll_address, reinterpret_cast<uintptr_t>(&Input::Poll));
     }

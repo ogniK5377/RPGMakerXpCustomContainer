@@ -181,6 +181,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         return 1;
     }
 
+    Patches::GrabGameClassAddress(library_path);
+
     // If we want to patch the rgssad, start patching
     if (PATCH_KEY_AND_HEADER) {
         Patches::SwapRgssadEncryption(library_path);
@@ -191,7 +193,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         Patches::SetupDetours(library_path);
     }
 
-    Patches::PatchiBindings(library_path);
+    Patches::PatchBindings(library_path);
 
     // Get the exports from the RGSS dll
     if (!GetRGSSExports(rgssad_library)) {

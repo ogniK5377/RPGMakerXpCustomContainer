@@ -18,6 +18,12 @@
     <Filter Include="Source Files\RubyModules">
       <UniqueIdentifier>{f769a3d0-a5fd-4895-8eb6-ec277df8939d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Patches">
+      <UniqueIdentifier>{e5519e15-cf1d-4f14-a507-bb2b30b65534}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Patches">
+      <UniqueIdentifier>{0d29bf7f-d94a-4250-8713-cfb740522260}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -29,12 +35,6 @@
     <ClCompile Include="SigScanner.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ld32.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="EnginePatches.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="AriMath.cpp">
       <Filter>Source Files\RubyModules</Filter>
     </ClCompile>
@@ -44,8 +44,14 @@
     <ClCompile Include="FileIO.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="EnginePatches.cpp">
+      <Filter>Source Files\Patches</Filter>
+    </ClCompile>
+    <ClCompile Include="ld32.c">
+      <Filter>Source Files\Patches</Filter>
+    </ClCompile>
     <ClCompile Include="Input.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Patches</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -55,26 +61,29 @@
     <ClInclude Include="MemoryUtil.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ld32.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="EnginePatches.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="AriMath.h">
       <Filter>Header Files\RubyModules</Filter>
     </ClInclude>
     <ClInclude Include="RubyCommon.h">
       <Filter>Header Files\RubyModules</Filter>
     </ClInclude>
-    <ClInclude Include="Common.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="FileIO.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ld32.h">
+      <Filter>Header Files\Patches</Filter>
+    </ClInclude>
     <ClInclude Include="Input.h">
+      <Filter>Header Files\Patches</Filter>
+    </ClInclude>
+    <ClInclude Include="EnginePatches.h">
+      <Filter>Header Files\Patches</Filter>
+    </ClInclude>
+    <ClInclude Include="Common.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RPG_Game.h">
+      <Filter>Header Files\Patches</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
