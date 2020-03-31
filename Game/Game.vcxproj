@@ -151,6 +151,7 @@
     <ClCompile Include="ld32.c" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MemoryUtil.cpp" />
+    <ClCompile Include="NewInput.cpp" />
     <ClCompile Include="RubyCommon.cpp" />
     <ClCompile Include="SigScanner.cpp" />
   </ItemGroup>
@@ -162,6 +163,7 @@
     <ClInclude Include="Input.h" />
     <ClInclude Include="ld32.h" />
     <ClInclude Include="MemoryUtil.h" />
+    <ClInclude Include="NewInput.h" />
     <ClInclude Include="RPG_Game.h" />
     <ClInclude Include="RubyCommon.h" />
     <ClInclude Include="SigScanner.h" />

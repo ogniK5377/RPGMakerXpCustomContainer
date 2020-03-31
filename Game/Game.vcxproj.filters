@@ -53,6 +53,9 @@
     <ClCompile Include="Input.cpp">
       <Filter>Source Files\Patches</Filter>
     </ClCompile>
+    <ClCompile Include="NewInput.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SigScanner.h">
@@ -84,6 +87,9 @@
     </ClInclude>
     <ClInclude Include="RPG_Game.h">
       <Filter>Header Files\Patches</Filter>
+    </ClInclude>
+    <ClInclude Include="NewInput.h">
+      <Filter>Header Files\RubyModules</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

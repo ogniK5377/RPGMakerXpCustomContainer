@@ -10,7 +10,7 @@
 #include "SigScanner.h"
 
 constexpr bool PATCH_KEY_AND_HEADER = false;
-constexpr bool PATCH_CUSTOM_MODULES = false;
+constexpr bool PATCH_CUSTOM_MODULES = true;
 
 using RGSSInitializeProc = void (*)(HINSTANCE);
 using RGSSFinalizeProc = void (*)(void);

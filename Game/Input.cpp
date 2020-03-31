@@ -6,6 +6,7 @@
 #include "RPG_Game.h"
 
 namespace Input {
+
 bool KeyDown(int vkey) {
     return GetAsyncKeyState(vkey) < 0;
 }
@@ -112,6 +113,118 @@ void Poll(Memory::CRxInput* input) {
     }
 
     bstate[0] = 0;
+}
+
+bool KeyRepeat(Memory::CRxInput* input, int key) {
+    if (key < 0 || key >= 30) {
+        return false;
+    }
+    return input->first_press_on_frame == key && (input->first_press_hold_framecount == 1 ||
+                                                  input->first_press_hold_framecount >= 0x10u &&
+                                                      !(input->first_press_hold_framecount % 4u));
+}
+
+bool KeyTrigger(Memory::CRxInput* input, int key) {
+    if (key < 0 || key >= 30) {
+        return false;
+    }
+    return input->current_button_state[key] && !input->last_button_state[key];
+}
+
+bool KeyPress(Memory::CRxInput* input, int key) {
+    if (key < 0 || key >= 30) {
+        return false;
+    }
+    return input->current_button_state[key];
+}
+
+void Update(Memory::CRxInput* input) {
+    Poll(input);
+    std::memcpy(input->last_button_state.data(), input->current_button_state.data(),
+                input->current_button_state.size());
+    std::memcpy(input->current_button_state.data(), input->button_state.data(),
+                input->current_button_state.size());
+    std::memset(input->button_state.data(), 0, input->button_state.size());
+
+    for (int i = 0; i < static_cast<int>(input->button_state.size()); i++) {
+        if (KeyTrigger(input, i)) {
+            input->first_press_on_frame = i;
+            input->first_press_hold_framecount = 0;
+        }
+    }
+
+    if (KeyPress(input, input->first_press_on_frame)) {
+        input->first_press_hold_framecount++;
+    } else {
+        input->first_press_on_frame = 0;
+        input->first_press_hold_framecount = 0;
+    }
+
+    int left_right_dir = 0;
+    int up_down_dir = 0;
+
+    if (KeyPress(input, 4)) {
+        left_right_dir--;
+    }
+    if (KeyPress(input, 8)) {
+        up_down_dir--;
+    }
+    if (KeyPress(input, 6)) {
+        left_right_dir++;
+    }
+    if (KeyPress(input, 2)) {
+        up_down_dir++;
+    }
+
+    // Get Dir8
+    input->dir8 = 0;
+    if (left_right_dir < 0) {
+        if (up_down_dir < 0) {
+            input->dir8 = 7;
+        } else if (up_down_dir == 0) {
+            input->dir8 = 4;
+        } else {
+            input->dir8 = 1;
+        }
+    } else if (left_right_dir == 0) {
+        if (up_down_dir < 0) {
+            input->dir8 = 8;
+        } else if (up_down_dir > 0) {
+            input->dir8 = 2;
+        }
+    } else if (left_right_dir > 0) {
+        if (up_down_dir < 0) {
+            input->dir8 = 9;
+        } else if (up_down_dir == 0) {
+            input->dir8 = 6;
+        } else {
+            input->dir8 = 3;
+        }
+    }
+
+    if (left_right_dir && up_down_dir) {
+        if (!input->is_moving_sideways) {
+            up_down_dir = 0;
+        } else if (input->is_moving_sideways == 1) {
+            left_right_dir = 0;
+        }
+    } else if (left_right_dir) {
+        input->is_moving_sideways = 1;
+    } else if (up_down_dir) {
+        input->is_moving_sideways = 0;
+    }
+
+    // Dir4
+    input->dir4 = 0;
+    if (left_right_dir < 0) {
+        input->dir4 = 4;
+    } else if (up_down_dir < 0) {
+        input->dir4 = 8;
+    } else if (left_right_dir > 0) {
+        input->dir4 = 6;
+    } else if (up_down_dir > 0) {
+        input->dir4 = 2;
+    }
 }
 
 } // namespace Input
