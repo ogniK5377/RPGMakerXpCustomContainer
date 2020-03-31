@@ -96,6 +96,8 @@ void PatchBindings(const char* library_path) {
     MemoryUtil::SigScanner scanner(library_path);
     scanner.AddNewSignature("CRxInput::Poll", "\xE8\x00\x00\x00\x00\x6A\x1E\x8B\x45\xF0",
                             "x????xxxxx");
+    scanner.AddNewSignature("ChangeScreenMode", "\x8B\x44\x24\x04\x8B\x91\x00\x00\x00\x00",
+                            "xxxxxx????");
     scanner.Scan();
     if (scanner.HasFoundAll()) {
         const auto poll_address =
@@ -103,6 +105,7 @@ void PatchBindings(const char* library_path) {
         using PollType = void(__thiscall*)(Memory::CRxInput*);
         // We're completely overriding the function, we don't need the original address
         MemoryUtil::CreateDetour<PollType>(poll_address, reinterpret_cast<uintptr_t>(&Input::Poll));
+        Input::ChangeScreenModeAddress = scanner.GetScannedAddress("ChangeScreenMode");
     }
 }
 

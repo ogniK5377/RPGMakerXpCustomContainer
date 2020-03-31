@@ -2,10 +2,10 @@
 #include <Windows.h>
 #include "EnginePatches.h"
 #include "Input.h"
+#include "MemoryUtil.h"
 #include "RPG_Game.h"
 
 namespace Input {
-
 bool KeyDown(int vkey) {
     return GetAsyncKeyState(vkey) < 0;
 }
@@ -21,13 +21,13 @@ void Poll(Memory::CRxInput* input) {
             if (pji.dwXpos < input->left_deadzone) {
                 bstate[4] = 1;
             }
-            if (pji.dwYpos < input->down_deadzone) {
+            if (pji.dwYpos < input->up_deadzone) {
                 bstate[8] = 1;
             }
             if (pji.dwXpos > input->right_deadzone) {
                 bstate[6] = 1;
             }
-            if (pji.dwYpos > input->up_deadzone) {
+            if (pji.dwYpos > input->down_deadzone) {
                 bstate[2] = 1;
             }
 
@@ -100,6 +100,16 @@ void Poll(Memory::CRxInput* input) {
     CheckButton(VK_F7, 27);
     CheckButton(VK_F8, 28);
     CheckButton(VK_F9, 29);
+
+    if (KeyDown('P')) {
+        auto* game = Patches::RPGGameClass;
+        if (timeGetTime() - game->last_fullscreen_time >= 1000) {
+            MemoryUtil::AddressCall<MemoryUtil::CallConvention::ThisCall, void, Memory::CRxScreen*,
+                                    int>(ChangeScreenModeAddress, game->RxScreen,
+                                         game->RxScreen->is_full_screen == 0);
+            game->last_fullscreen_time = timeGetTime();
+        }
+    }
 
     bstate[0] = 0;
 }
