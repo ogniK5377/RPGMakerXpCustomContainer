@@ -22,8 +22,11 @@ public:
 
     RB_VALUE DefineModule(const char* module_name);
     RB_VALUE DefineClass(const char* name, RB_VALUE super);
+    void DefineSingletonMethod(RB_VALUE obj, const char* name, void* method, int argc);
     void DefineModuleFunction(RB_VALUE module_id, const char* method_name, void* method, int argc);
     void DefineConst(RB_VALUE module_id, const char* const_name, RB_VALUE value);
+    long NumToLong(RB_VALUE num);
+    RB_VALUE IntToNum(long num);
     RB_VALUE MakeFloat(double value);
     Ruby::Float* GetFloat(RB_VALUE value);
     bool ObjIsInstanceOf(RB_VALUE obj, RB_VALUE c);
@@ -45,7 +48,11 @@ private:
     using RbFloatNewType = RB_VALUE(__cdecl*)(double value);
     using RbFloatType = Ruby::Float*(__cdecl*)(RB_VALUE value);
     using RbObjIsInstanceOf = RB_VALUE(__cdecl*)(RB_VALUE obj, RB_VALUE c);
-    using RbDefineClass = RB_VALUE(__cdecl*)(const char* name, RB_VALUE super);
+    using RbDefineClassType = RB_VALUE(__cdecl*)(const char* name, RB_VALUE super);
+    using RbDefineSingletonMethodType = void(__cdecl*)(RB_VALUE obj, const char* name, void* method,
+                                                       int argc);
+    using RbNum2LongType = long(__cdecl*)(RB_VALUE num);
+    using RbInt2INumType = RB_VALUE(__cdecl*)(long num);
 
     RegisterRectModuleType O_RegisterRectModule{};
     RbDefineModuleType rb_define_module{};
@@ -54,7 +61,10 @@ private:
     RbFloatNewType rb_float_new{};
     RbFloatType rb_float{};
     RbObjIsInstanceOf rb_obj_is_instance_of{};
-    RbDefineClass rb_define_class{};
+    RbDefineClassType rb_define_class{};
+    RbDefineSingletonMethodType rb_define_singleton_method{};
+    RbNum2LongType rb_num2long{};
+    RbInt2INumType rb_int2inum{};
     RB_VALUE rb_cObject{};
 
     std::vector<std::function<void()>> module_registry;

@@ -37,24 +37,37 @@ void Common::Initialize(const char* library_path) {
     scanner.AddNewSignature("HandleF12Reset",
                             "\xE8\x00\x00\x00\x00\x83\x3D\x00\x00\x00\x00\x00\x74\x1E",
                             "x????xx?????xx");
+    scanner.AddNewSignature("rb_define_singleton_method",
+                            "\xE8\x00\x00\x00\x00\x83\xC4\x10\x8B\x4D\xF4", "x????xxxxxx");
+    scanner.AddNewSignature("rb_num2long",
+                            "\xE8\x00\x00\x00\x00\x83\xC4\x04\x89\x45\x9C\x8B\x45\x9C",
+                            "x????xxxxxxxxx");
+    scanner.AddNewSignature("rb_int2inum", "\xE8\x00\x00\x00\x00\x83\xC4\x04\xEB\x72",
+                            "x????xxxxx");
     scanner.Scan();
 
     if (scanner.HasFoundAll()) {
         const auto register_rect_module_addr =
-            MemoryUtil::CallToDirectAddress(scanner.GetScannedAddress("RegisterRectModule"));
+            MemoryUtil::InstructionToDirectAddress(scanner.GetScannedAddress("RegisterRectModule"));
         const auto rb_define_module_addr =
-            MemoryUtil::CallToDirectAddress(scanner.GetScannedAddress("rb_define_module"));
-        const auto rb_define_module_function_addr =
-            MemoryUtil::CallToDirectAddress(scanner.GetScannedAddress("rb_define_module_function"));
+            MemoryUtil::InstructionToDirectAddress(scanner.GetScannedAddress("rb_define_module"));
+        const auto rb_define_module_function_addr = MemoryUtil::InstructionToDirectAddress(
+            scanner.GetScannedAddress("rb_define_module_function"));
         const auto rb_define_const_addr =
-            MemoryUtil::CallToDirectAddress(scanner.GetScannedAddress("rb_define_const"));
+            MemoryUtil::InstructionToDirectAddress(scanner.GetScannedAddress("rb_define_const"));
         const auto rb_float_new_addr =
-            MemoryUtil::CallToDirectAddress(scanner.GetScannedAddress("rb_float_new"));
+            MemoryUtil::InstructionToDirectAddress(scanner.GetScannedAddress("rb_float_new"));
         const auto rb_float_addr = scanner.GetScannedAddress("rb_float");
         const auto rb_define_class_addr =
-            MemoryUtil::CallToDirectAddress(scanner.GetScannedAddress("rb_define_class"));
+            MemoryUtil::InstructionToDirectAddress(scanner.GetScannedAddress("rb_define_class"));
         const auto HandleF12Reset_addr =
-            MemoryUtil::CallToDirectAddress(scanner.GetScannedAddress("HandleF12Reset"));
+            MemoryUtil::InstructionToDirectAddress(scanner.GetScannedAddress("HandleF12Reset"));
+        const auto rb_define_singleton_method_addr = MemoryUtil::InstructionToDirectAddress(
+            scanner.GetScannedAddress("rb_define_singleton_method"));
+        const auto rb_num2long_addr =
+            MemoryUtil::InstructionToDirectAddress(scanner.GetScannedAddress("rb_num2long"));
+        const auto rb_int2inum_addr =
+            MemoryUtil::InstructionToDirectAddress(scanner.GetScannedAddress("rb_int2inum"));
 
         rb_cObject = *reinterpret_cast<RB_VALUE*>(HandleF12Reset_addr + 0x2A + 2);
 
@@ -67,7 +80,11 @@ void Common::Initialize(const char* library_path) {
         rb_define_const = MemoryUtil::MakeCallable<RbDefineConstType>(rb_define_const_addr);
         rb_float_new = MemoryUtil::MakeCallable<RbFloatNewType>(rb_float_new_addr);
         rb_float = MemoryUtil::MakeCallable<RbFloatType>(rb_float_addr);
-        rb_define_class = MemoryUtil::MakeCallable<RbDefineClass>(rb_define_class_addr);
+        rb_define_class = MemoryUtil::MakeCallable<RbDefineClassType>(rb_define_class_addr);
+        rb_define_singleton_method =
+            MemoryUtil::MakeCallable<RbDefineSingletonMethodType>(rb_define_singleton_method_addr);
+        rb_num2long = MemoryUtil::MakeCallable<RbNum2LongType>(rb_num2long_addr);
+        rb_int2inum = MemoryUtil::MakeCallable<RbInt2INumType>(rb_int2inum_addr);
     }
 }
 
@@ -83,6 +100,10 @@ RB_VALUE Common::DefineClass(const char* name, RB_VALUE super) {
     return rb_define_class(name, super);
 }
 
+void Common::DefineSingletonMethod(RB_VALUE obj, const char* name, void* method, int argc) {
+    rb_define_singleton_method(obj, name, method, argc);
+}
+
 void Common::DefineModuleFunction(RB_VALUE module_id, const char* method_name, void* method,
                                   int argc) {
     rb_define_module_function(module_id, method_name, method, argc);
@@ -90,6 +111,14 @@ void Common::DefineModuleFunction(RB_VALUE module_id, const char* method_name, v
 
 void Common::DefineConst(RB_VALUE module_id, const char* const_name, RB_VALUE value) {
     rb_define_const(module_id, const_name, value);
+}
+
+long Common::NumToLong(RB_VALUE num) {
+    return rb_num2long(num);
+}
+
+RB_VALUE Common::IntToNum(long num) {
+    return rb_int2inum(num);
 }
 
 RB_VALUE Common::MakeFloat(double value) {

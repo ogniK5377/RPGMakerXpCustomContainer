@@ -3,7 +3,10 @@
 #include "AriMath.h"
 #include "Common.h"
 #include "EnginePatches.h"
+#include "Input.h"
 #include "MemoryUtil.h"
+#include "NewInput.h"
+#include "RPG_Game.h"
 #include "RubyCommon.h"
 #include "SigScanner.h"
 
@@ -20,9 +23,31 @@ ReadRGSSADType ORIGINAL_READ_RGSSAD = nullptr;
 MallocType RGSSAD_MALLOC = nullptr;
 */
 
+using GameClassConstructorType = Memory::Game*(__thiscall*)(Memory::Game*);
+GameClassConstructorType O_GameClassConstructor{};
+
+Memory::Game* __fastcall ConstructGameClass(Memory::Game* game) {
+    RPGGameClass = O_GameClassConstructor(game);
+    return RPGGameClass;
+}
+
+void GrabGameClassAddress(const char* library_path) {
+    MemoryUtil::SigScanner scanner(library_path);
+    scanner.AddNewSignature("InitializeGameClass", "\xE8\x00\x00\x00\x00\x89\x45\xE4\xEB\x07",
+                            "x????xxxxx");
+    scanner.Scan();
+    if (scanner.HasFoundAll()) {
+        const auto init_addr = MemoryUtil::InstructionToDirectAddress(
+            scanner.GetScannedAddress("InitializeGameClass"));
+        O_GameClassConstructor = MemoryUtil::CreateDetour<GameClassConstructorType>(
+            init_addr, reinterpret_cast<uintptr_t>(&ConstructGameClass));
+    }
+}
+
 void SetupDetours(const char* library_path) {
     auto* common = Ruby::Common::Get();
     common->AddNewModule(&RubyModule::RegisterAriMath);
+    common->AddNewModule(&RubyModule::RegisterCustomInput);
     common->Initialize(library_path);
 }
 
@@ -66,6 +91,38 @@ void SwapRgssadEncryption(const char* library_path) {
         MemoryUtil::PatchType<unsigned int>(key_address, NEW_KEY);
     } else {
         LOG("Incorrect RGSSAD dll supplied!");
+    }
+}
+
+void PatchBindings(const char* library_path) {
+    MemoryUtil::SigScanner scanner(library_path);
+    scanner.AddNewSignature("CRxInput::Poll", "\xE8\x00\x00\x00\x00\x6A\x1E\x8B\x45\xF0",
+                            "x????xxxxx");
+    scanner.AddNewSignature("ChangeScreenMode", "\x8B\x44\x24\x04\x8B\x91\x00\x00\x00\x00",
+                            "xxxxxx????");
+    scanner.AddNewSignature("RegisterInputModule",
+                            "\xE8\x00\x00\x00\x00\xE8\x00\x00\x00\x00\x5D\xC3\xCC\xCC\xCC\xCC",
+                            "x????x????xxxxxx");
+    scanner.Scan();
+    if (scanner.HasFoundAll()) {
+        const auto poll_address =
+            MemoryUtil::InstructionToDirectAddress(scanner.GetScannedAddress("CRxInput::Poll"));
+        const auto register_input_address = MemoryUtil::InstructionToDirectAddress(
+            scanner.GetScannedAddress("RegisterInputModule"));
+        const auto global_input_module_address = register_input_address + 5;
+        using PollType = void(__thiscall*)(Memory::CRxInput*);
+        using RegisterInputType = void(__cdecl*)();
+        // We're completely overriding the function, we don't need the original address
+        Input::POLL_ADDRESS = poll_address;
+        RubyModule::InputModule = reinterpret_cast<RB_VALUE*>(
+            MemoryUtil::ReadType<uintptr_t>(global_input_module_address));
+
+        // MemoryUtil::CreateDetour<PollType>(poll_address,
+        // reinterpret_cast<uintptr_t>(&Input::Poll));
+        MemoryUtil::CreateDetour<RegisterInputType>(
+            register_input_address, reinterpret_cast<uintptr_t>(&RubyModule::RegisterCustomInput));
+
+        Input::ChangeScreenModeAddress = scanner.GetScannedAddress("ChangeScreenMode");
     }
 }
 
