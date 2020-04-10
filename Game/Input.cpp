@@ -102,6 +102,7 @@ void Poll(Memory::CRxInput* input) {
     CheckButton(VK_F8, 28);
     CheckButton(VK_F9, 29);
 
+    /*
     if (KeyDown('P')) {
         auto* game = Patches::RPGGameClass;
         if (timeGetTime() - game->last_fullscreen_time >= 1000) {
@@ -110,7 +111,7 @@ void Poll(Memory::CRxInput* input) {
                                          game->RxScreen->is_full_screen == 0);
             game->last_fullscreen_time = timeGetTime();
         }
-    }
+    }*/
 
     bstate[0] = 0;
 }
