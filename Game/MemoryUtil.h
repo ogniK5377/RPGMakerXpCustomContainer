@@ -1,6 +1,7 @@
 #pragma once
 #include <cstring>
 #include <type_traits>
+#include <utility>
 #include <Windows.h>
 extern "C" {
 #include "ld32.h"
@@ -23,7 +24,7 @@ void PatchBytes(uintptr_t address, const char* bytes, std::size_t length);
 void PatchJump(uintptr_t src, uintptr_t dst);
 void PatchJumpNoProtect(uintptr_t src, uintptr_t dst);
 uintptr_t CalculateJumpOffset(uintptr_t src, uintptr_t dst);
-uintptr_t CallToDirectAddress(uintptr_t src);
+uintptr_t InstructionToDirectAddress(uintptr_t src);
 uintptr_t SlideAddress(uintptr_t base, uintptr_t offset);
 uintptr_t SlideAddress(uintptr_t base, uintptr_t old_base, uintptr_t address);
 MemPerm Reprotect(uintptr_t address, std::size_t size, MemPerm new_permissions);
@@ -159,6 +160,37 @@ T CreateVMTMethodDetour(uintptr_t base, uintptr_t dst) {
     PatchType<uintptr_t>(method_offset, dst);
 
     return reinterpret_cast<T>(original);
+}
+
+template <typename T, std::size_t N>
+void VMTPlaceholderFunc(T t) {
+    static_assert(std::is_pointer_v<T>, "T must be a pointer");
+
+    const auto n = N;
+    N;
+    __debugbreak();
+}
+
+template <typename T, std::size_t P>
+void VMTPlaceholderHook(uintptr_t base) {
+    static_assert(std::is_pointer_v<T>, "T must be a pointer");
+
+    PatchType<uintptr_t>(base + (sizeof(uintptr_t) * P),
+                         reinterpret_cast<uintptr_t>(&VMTPlaceholderFunc<T, P>));
+    if constexpr (P > 0) {
+        VMTPlaceholderHook<T, P - 1>(base);
+    }
+}
+
+template <typename T, std::size_t SIZE>
+void VMTPlaceholder(uintptr_t base) {
+    static_assert(SIZE > 0, "Invalid size specified");
+    static_assert(std::is_pointer_v<T>, "T must be a pointer");
+
+    constexpr std::size_t vmt_mem_size = SIZE * sizeof(uintptr_t);
+
+    ReprotectScope<MemPerm::ReadWriteExecute> protection(base, vmt_mem_size);
+    VMTPlaceholderHook<T, SIZE - 1>(base);
 }
 
 } // namespace MemoryUtil

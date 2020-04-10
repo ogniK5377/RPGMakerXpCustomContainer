@@ -37,8 +37,8 @@ void GrabGameClassAddress(const char* library_path) {
                             "x????xxxxx");
     scanner.Scan();
     if (scanner.HasFoundAll()) {
-        const auto init_addr =
-            MemoryUtil::CallToDirectAddress(scanner.GetScannedAddress("InitializeGameClass"));
+        const auto init_addr = MemoryUtil::InstructionToDirectAddress(
+            scanner.GetScannedAddress("InitializeGameClass"));
         O_GameClassConstructor = MemoryUtil::CreateDetour<GameClassConstructorType>(
             init_addr, reinterpret_cast<uintptr_t>(&ConstructGameClass));
     }
@@ -106,9 +106,9 @@ void PatchBindings(const char* library_path) {
     scanner.Scan();
     if (scanner.HasFoundAll()) {
         const auto poll_address =
-            MemoryUtil::CallToDirectAddress(scanner.GetScannedAddress("CRxInput::Poll"));
-        const auto register_input_address =
-            MemoryUtil::CallToDirectAddress(scanner.GetScannedAddress("RegisterInputModule"));
+            MemoryUtil::InstructionToDirectAddress(scanner.GetScannedAddress("CRxInput::Poll"));
+        const auto register_input_address = MemoryUtil::InstructionToDirectAddress(
+            scanner.GetScannedAddress("RegisterInputModule"));
         const auto global_input_module_address = register_input_address + 5;
         using PollType = void(__thiscall*)(Memory::CRxInput*);
         using RegisterInputType = void(__cdecl*)();

@@ -48,26 +48,26 @@ void Common::Initialize(const char* library_path) {
 
     if (scanner.HasFoundAll()) {
         const auto register_rect_module_addr =
-            MemoryUtil::CallToDirectAddress(scanner.GetScannedAddress("RegisterRectModule"));
+            MemoryUtil::InstructionToDirectAddress(scanner.GetScannedAddress("RegisterRectModule"));
         const auto rb_define_module_addr =
-            MemoryUtil::CallToDirectAddress(scanner.GetScannedAddress("rb_define_module"));
-        const auto rb_define_module_function_addr =
-            MemoryUtil::CallToDirectAddress(scanner.GetScannedAddress("rb_define_module_function"));
+            MemoryUtil::InstructionToDirectAddress(scanner.GetScannedAddress("rb_define_module"));
+        const auto rb_define_module_function_addr = MemoryUtil::InstructionToDirectAddress(
+            scanner.GetScannedAddress("rb_define_module_function"));
         const auto rb_define_const_addr =
-            MemoryUtil::CallToDirectAddress(scanner.GetScannedAddress("rb_define_const"));
+            MemoryUtil::InstructionToDirectAddress(scanner.GetScannedAddress("rb_define_const"));
         const auto rb_float_new_addr =
-            MemoryUtil::CallToDirectAddress(scanner.GetScannedAddress("rb_float_new"));
+            MemoryUtil::InstructionToDirectAddress(scanner.GetScannedAddress("rb_float_new"));
         const auto rb_float_addr = scanner.GetScannedAddress("rb_float");
         const auto rb_define_class_addr =
-            MemoryUtil::CallToDirectAddress(scanner.GetScannedAddress("rb_define_class"));
+            MemoryUtil::InstructionToDirectAddress(scanner.GetScannedAddress("rb_define_class"));
         const auto HandleF12Reset_addr =
-            MemoryUtil::CallToDirectAddress(scanner.GetScannedAddress("HandleF12Reset"));
-        const auto rb_define_singleton_method_addr = MemoryUtil::CallToDirectAddress(
+            MemoryUtil::InstructionToDirectAddress(scanner.GetScannedAddress("HandleF12Reset"));
+        const auto rb_define_singleton_method_addr = MemoryUtil::InstructionToDirectAddress(
             scanner.GetScannedAddress("rb_define_singleton_method"));
         const auto rb_num2long_addr =
-            MemoryUtil::CallToDirectAddress(scanner.GetScannedAddress("rb_num2long"));
+            MemoryUtil::InstructionToDirectAddress(scanner.GetScannedAddress("rb_num2long"));
         const auto rb_int2inum_addr =
-            MemoryUtil::CallToDirectAddress(scanner.GetScannedAddress("rb_int2inum"));
+            MemoryUtil::InstructionToDirectAddress(scanner.GetScannedAddress("rb_int2inum"));
 
         rb_cObject = *reinterpret_cast<RB_VALUE*>(HandleF12Reset_addr + 0x2A + 2);
 
