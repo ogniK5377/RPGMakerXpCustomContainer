@@ -8,7 +8,7 @@ void NopSled(uintptr_t address, std::size_t length) {
 
     // Fill memory with NOPs
     for (std::size_t i = 0; i < length; i++) {
-        PatchType<unsigned char>(address + i, 0x90); // The opcode 0x90 is NOP
+        PatchType<uint8_t>(address + i, 0x90); // The opcode 0x90 is NOP
     }
 }
 
@@ -17,7 +17,7 @@ void PatchBytes(uintptr_t address, const char* bytes, std::size_t length) {
 
     // Overwrite memory region with our data
     for (std::size_t i = 0; i < length; i++) {
-        PatchType<char>(address + i, bytes[i]);
+        PatchType<uint8_t>(address + i, static_cast<uint8_t>(bytes[i]));
     }
 }
 
@@ -30,7 +30,7 @@ void PatchJump(uintptr_t src, uintptr_t dst) {
 
 void PatchJumpNoProtect(uintptr_t src, uintptr_t dst) {
     // JMP 0xAABBCCDD
-    PatchType<unsigned char>(src, 0xe9);                          // JMP
+    PatchType<uint8_t>(src, 0xe9);                                // JMP
     PatchType<uintptr_t>(src + 1, CalculateJumpOffset(src, dst)); // Address offset to jump to
 }
 
