@@ -3,6 +3,7 @@
 #include <Windows.h>
 #include <psapi.h>
 #include "FileIO.h"
+#include "MemoryUtil.h"
 #include "SigScanner.h"
 
 namespace MemoryUtil {
@@ -44,14 +45,14 @@ void SigScanner::Scan() {
                         reinterpret_cast<uintptr_t>(base) + cache_sig.offset_from_base;
 
                     // Signature validation
-                    char* p = reinterpret_cast<char*>(absolute_address);
                     bool is_still_valid = true;
                     for (std::size_t i = 0; i < cache_sig.signature.sig_length; i++) {
                         if (cache_sig.signature.mask[i] == '?') {
                             continue;
                         }
 
-                        if (cache_sig.signature.signature[i] != *(p + i)) {
+                        if (static_cast<uint8_t>(cache_sig.signature.signature[i]) !=
+                            MemoryUtil::ReadType<uint8_t>(absolute_address + i)) {
                             is_still_valid = false;
                             break;
                         }
@@ -73,8 +74,10 @@ void SigScanner::Scan() {
         }
     }
 
-    char* p = reinterpret_cast<char*>(base);
-    char* end = reinterpret_cast<char*>(p + module_info.SizeOfImage);
+    // char* p = reinterpret_cast<char*>(base);
+    // char* end = reinterpret_cast<char*>(p + module_info.SizeOfImage);
+    uintptr_t p = reinterpret_cast<uintptr_t>(base);
+    const uintptr_t end = p + module_info.SizeOfImage;
 
     // While we're not at the end of our image and we still need to look for signatures
     while (!sigs_to_find.empty() && p < end) {
@@ -88,7 +91,8 @@ void SigScanner::Scan() {
                     continue;
                 }
                 // Compare if our signature byte matches the memory byte
-                if (it->signature[i] != *(p + i)) {
+                if (static_cast<uint8_t>(it->signature[i]) !=
+                    MemoryUtil::ReadType<uint8_t>(p + i)) {
                     found = false;
                     break;
                 }
@@ -96,7 +100,7 @@ void SigScanner::Scan() {
             // If we scanned our whole signature without failing, we found our signature
             if (found) {
                 found_sigs[it->name].signature = *it;
-                found_sigs[it->name].address = reinterpret_cast<uintptr_t>(p) + it->offset;
+                found_sigs[it->name].address = p + it->offset;
                 it = sigs_to_find.erase(it);
             } else {
                 it++;
