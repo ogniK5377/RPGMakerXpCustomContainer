@@ -25,6 +25,7 @@ RGSSAD=Game.rgssad
 FastBoot=1
 AllowDebugger=0
 Dlls=
+AllowOutOfFocus=0
 ```
 4. Make any changes as needed
 
@@ -45,6 +46,10 @@ Allow debugger patches `IsDebuggerPresent()` to allow a debugger to be attached 
 ### DLLs
 
 Dlls lets you set a new directory for where to scan for newly loaded DLLs. This is typically useful if you have a lot of DLLs and you want to keep your main directory clean so users can easily find where to run the game.
+
+### AllowOutOfFocus
+
+This allows the game to continue running as if the window is active. This means the window doesn't need to be in focus for the game to actually work
 
 ## Building
 Build using Visual Studio 2019

@@ -93,6 +93,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     const auto allow_debugger =
         GetPrivateProfileInt("Container", "AllowDebugger", 0, game_config.c_str()) > 0;
 
+    const auto run_out_of_focus =
+        GetPrivateProfileInt("Container", "AllowOutOfFocus", 0, game_config.c_str()) > 0;
+
     if (allow_debugger) {
         Patches::PatchDebugPresent();
     }
@@ -180,6 +183,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             LOG(error.c_str());
         }
         return 1;
+    }
+
+    if (run_out_of_focus) {
+        Patches::RunOutOfFocus(library_path);
     }
 
     Patches::GrabGameClassAddress(library_path);
