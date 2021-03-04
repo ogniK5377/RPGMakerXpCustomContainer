@@ -52,8 +52,7 @@ void SetupDetours(const char* library_path) {
 }
 
 /* Encryption key swap */
-constexpr std::array<char, 8> PATCHED_HEADER{'\x31', '\xac', '\x3e', '\x2d',
-                                             '\x9b', '\x23', '\xda', '\x11'};
+constexpr std::array PATCHED_HEADER{'\x31', '\xac', '\x3e', '\x2d', '\x9b', '\x23', '\xda', '\x11'};
 constexpr unsigned int NEW_KEY = 0xBCF33B95;
 
 void SwapRgssadEncryption(const char* library_path) {
@@ -78,7 +77,7 @@ void SwapRgssadEncryption(const char* library_path) {
         auto key_address = scanner.GetScannedAddress("RGSSAD_Key");
 
         // Copy our new header bytes and write
-        std::array<char, 32> header;
+        std::array<char, 32> header{};
         std::memcpy(header.data(), reinterpret_cast<void*>(header_address), header.size());
         for (std::size_t i = 0; i < PATCHED_HEADER.size(); i++) {
             header[i * 4] = PATCHED_HEADER[i];
@@ -126,6 +125,31 @@ void PatchBindings(const char* library_path) {
     }
 }
 
+/* Allow the game to run out of focus */
+// This patch specifically patches the WM_ACTIVATEAPP to always specify that
+// the window is always in focus
+// 8B 4D 10            mov ecx, [ebp+wParam]
+// 89 88 14 01 00 00   mov[eax + window_active], ecx
+void RunOutOfFocus(const char* library_path) {
+    MemoryUtil::SigScanner scanner(library_path);
+    scanner.AddNewSignature("WndProc::WindowActive",
+                            "\x8B\x4D\x10\x89\x88\x00\x00\x00\x00\x8B\x55\x9C\x8B\x8A\x00\x00\x00"
+                            "\x00\xE8\x00\x00\x00\x00\x33\xC0\xEB\x5E",
+                            "xxxxx????xxxxx????x????xxxx");
+    scanner.Scan();
+    if (scanner.HasFoundAll()) {
+        // We're doing only a 3 byte patch to avoid code caving as
+        // mov ecx, [ebp+wParam]
+        // is 3 bytes long
+        static constexpr std::array patch{
+            '\x31', '\xc9', // XOR ECX, ECX
+            '\x41'          // INC ECX
+        };
+        MemoryUtil::PatchBytes(scanner.GetScannedAddress("WndProc::WindowActive"), patch.data(),
+                               patch.size());
+    }
+}
+
 /* Allow debugger patch */
 // If we're running from a debugger or within MSVC, we'll get a debugger is attached error. We
 // patch out the IsDebuggerPresent() check just to allow the ability to debug
@@ -140,7 +164,7 @@ void PatchDebugPresent() {
     }
 
     // EAX stores the return of IsDebuggerPresent()
-    static constexpr std::array<char, 3> patch{
+    static constexpr std::array patch{
         '\x31', '\xC0', // xor eax, eax
         '\xC3'          // ret
     };
